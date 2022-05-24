@@ -505,7 +505,7 @@ namespace FrameLogic {
             ReadFrameData();
         }
         else {
-            OSReport("Invalid player index! Can't send inputs to emulator!\n");
+            //OSReport("Invalid player index! Can't send inputs to emulator!\n");
         }
     }
 
@@ -541,7 +541,7 @@ namespace FrameLogic {
             DEFAULT_MT_RAND->seed = 0x496ffd00;
 
             u32 currentFrame = getCurrentFrame();
-            OSReport("------ Frame %u ------\n", currentFrame);
+            //OSReport("------ Frame %u ------\n", currentFrame);
             
             #if ROLLBACK_IMPL
             if (FrameAdvance::framesToAdvance >= 1) { // dont save state on stalled frames
