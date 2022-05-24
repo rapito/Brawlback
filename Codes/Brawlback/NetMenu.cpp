@@ -58,6 +58,36 @@ INJECTION("disableGetNetworkErrorOnSSS", 0x806b3a74, "li r3, 0"); // original wa
 DATA_WRITE(0x800CCF70, 48000024); // <- "b 0x24"
 
 
+// Training scene crap
+
+// 806bea38 seems like this address requestPreloadNetworkCharacter loops through the 4 players to try to preload info on all chars
+// 806beab4 callls getWifiPlayerInfo inside of the above method per each player, recevies r3-r7 r4 is the player index
+
+// 80963d68 calls updateDispPlayerWifiMenuSeq is the original method that updates the display of the wifi menu for each player
+// isCloseMatching checks if the matchmaking should end, if it returns true, everything is cleaned up and the menu is returned to
+
+// 809644cc calls isCompleteMeleeSettingAllMember, return boolean (I think this checks if local player locked in with settings)
+// 80964540 calls isCompleteCloseMatchingAllNode, returns boolean (I think this checks if all players have locked in)
+// 8096466c calls isWifiPreloadCharacter, returns boolean (I think this checks if all players have preloaded their characters)
+// 80964858 calls isPlayerAssignReceived, booleam (I think this checks if local player has received their assigned port)
+
+// 80964960 calls startBeginMeleeAnimation, This is called on a second loop after everything above have returned true
+// 8095f7f0 address of setPrepareLoadStageComplete, this is called after stage loads and melee has started on 806d2a74 inside scMelee.process I think
+// 8095f8e4 address of isPreparedLoadStageEveryone, boolean and is invoked from 806d2ad4 in the same manner as above
+// 8013fdd4 address of SetupIDList, I think this address sets up the list of player ids
+// Training Scene crap ends
+
+
+// Key parts to getting training mode to transition to melee
+// 809644d0 return value needs to be true
+// 80964670 return value needs to be true
+// 8096485c return value needs to be true
+// 8042ba8c address to batttlefield string
+
+
+// start scmelee: 806d0148: on this address melee settings are set to process like an online match
+// 806cf748 makigng this address follow the branch causes the scene to transition to the local melee scene
+
 // pretend request of "ConnectToAnybodyAsync" succeeded
 // thStartMatching/[NtMatching] replaces call to ConnectToAnybodyAsync with just a success code
 INJECTION("ConnectToAnybodyAsyncHook", 0x801494A4, R"(
