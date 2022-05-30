@@ -56,6 +56,8 @@ namespace GMMelee {
     // however, after doing so, you must set the player data for the scene or it will crash
     // So, after I trick the game into thinking the netplay players are in the lobby, this is called 5 times, just let it run once at the end (the fifth time)), 
     // before it goes off to the next scene
+
+    int netThreadTaskOverrideCalled = 0;
     SIMPLE_INJECTION(netThreadTaskOverride, 0x80964a80, "lwz	r3, 0x00B8 (r31)") { // hex instruction is 807f00b8
         _OSDisableInterrupts();
         OSReport("trainingRoomMatchmaking\n");
@@ -69,15 +71,22 @@ namespace GMMelee {
 
         // falco, wolf, battlefield
 
-        if (isMatchChoicesPopulated) {
-            PopulateMatchSettings( {0x15, 0x29, -1, -1}, 0x1 );
-            memcpy(GM_GLOBAL_MODE_MELEE, defaultGmGlobalModeMelee, 0x320);
-            u8* melee = (u8*)GM_GLOBAL_MODE_MELEE;
+        if (getCurrentFrame() > 150) {
+            if(netThreadTaskOverrideCalled < 4){
+                netThreadTaskOverrideCalled++; // hacks, just testing lol
+            } else if(!isMatchChoicesPopulated){
 
-            melee[P1_CHAR_ID_IDX] = charChoices[0];
-            melee[P2_CHAR_ID_IDX] = charChoices[1];
-            melee[STAGE_ID_IDX] = stageChoice;
-                // TODO: if you set offset 0x014E (r28) to 1 in here, then this should transition to scMelee
+                PopulateMatchSettings( {0x15, 0x29, -1, -1}, 0x1 );
+                memcpy(GM_GLOBAL_MODE_MELEE, defaultGmGlobalModeMelee, 0x320);
+                u8* melee = (u8*)GM_GLOBAL_MODE_MELEE;
+
+                melee[P1_CHAR_ID_IDX] = charChoices[0];
+                melee[P2_CHAR_ID_IDX] = charChoices[1];
+                melee[STAGE_ID_IDX] = stageChoice;
+                isMatchChoicesPopulated = true;
+                    // TODO: if you set offset 0x014E (r28) to 1 in here, then this should transition to scMelee
+            }
+
         }
 
 

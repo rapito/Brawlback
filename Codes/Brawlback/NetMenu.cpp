@@ -115,6 +115,29 @@ INJECTION("ConnectToAnybodyAsyncHook", 0x801494A4, R"(
 )");
 
 
+
+NO_REGS_INJECTION(BBisCompleteMeleeSettingAllMember, 0x809644cc, "nop", bool) {
+    return getCurrentFrame() > 150;
+}
+
+NO_REGS_INJECTION(BBisWifiPreloadCharacter, 0x8096466c, "nop", bool) {
+    return getCurrentFrame() > 150;
+}
+
+NO_REGS_INJECTION(BBisCompleteCloseMatchingAllNode, 0x80964540, "nop", bool) {
+    return getCurrentFrame() > 150;
+}
+
+NO_REGS_INJECTION(BBisPlayerAssignReceived, 0x80964858, "nop", bool) {
+    return getCurrentFrame() > 150;
+}
+
+INJECTION("BBSkipgmInitGlobalMelee", 0x806f27fc, R"(
+    BRANCH r12 0x806f2a88
+)");
+
+
+
 // 0x806f281c get Stage wifiKind, this can be overriden to return the selected stage
 // 0x806f284c item switch function
 // 0x806f291c getAssignedPlayerData, override to get player data from us

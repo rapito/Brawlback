@@ -57,6 +57,21 @@ asm(R"(
 	);                         \
     extern "C" void name()
 
+#define COMPLEX_INJECTION(name, address, replacement, returnType) \
+    INJECTION(#name, address, \
+		"SAVE_REGS\n" \
+		"bl " #name "\n" \
+		"RESTORE_REGS\n" \
+		replacement \
+	);                         \
+    extern "C" returnType name()
+
+#define NO_REGS_INJECTION(name, address, replacement, returnType) \
+    INJECTION(#name, address, \
+		"bl " #name "\n" \
+		replacement \
+	);                         \
+    extern "C" returnType name()
 
 
 #define STARTUP(name) \
@@ -131,6 +146,12 @@ asm(R"(.macro POP reg
 asm(R"(.macro SETREG reg label
     lis \reg, \label@ha
     addi \reg, \reg, \label@l
+.endm)");
+
+
+asm(R"(.macro LOAD reg address
+    lis \reg, \address@ha
+    ori \reg, \reg, \address@l
 .endm)");
 
 asm(R"(.macro BRANCH reg label
