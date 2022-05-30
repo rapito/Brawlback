@@ -54,20 +54,49 @@ namespace GMMelee {
     // 0x80963b9c = processBegin/[stOperatorInfoWifiPractice]/st_operator_inf proc that handles training room
     // 0x80964a80 = on this address with orig "lwz	r3, 0x00B8 (r31)" you can change the scene to scMelee by setting 1 to this offset 0x014E (r28)
     // however, after doing so, you must set the player data for the scene or it will crash
-    // SIMPLE_INJECTION(trainingRoomMatchmaking, 0x80964a80, "lwz	r3, 0x00B8 (r31)") { // hex instruction is 807f00b8
-    //     _OSDisableInterrupts();
-    //     OSReport("trainingRoomMatchmaking\n");
+    // So, after I trick the game into thinking the netplay players are in the lobby, this is called 5 times, just let it run once at the end (the fifth time)), 
+    // before it goes off to the next scene
+    SIMPLE_INJECTION(netThreadTaskOverride, 0x80964a80, "lwz	r3, 0x00B8 (r31)") { // hex instruction is 807f00b8
+        _OSDisableInterrupts();
+        OSReport("trainingRoomMatchmaking\n");
 
 
-    //     // #if NETPLAY_IMPL
-    //     // Netplay::StartMatching(); // start netplay logic
-    //     // #endif
+        // #if NETPLAY_IMPL
+        // Netplay::StartMatching(); // start netplay logic
+        // #endif
 
-    //     // TODO: just a bad test to wait for 300 updates before populating settings
+        // TODO: just a bad test to wait for 300 updates before populating settings
 
-    //     // falco, wolf, battlefield
+        // falco, wolf, battlefield
 
-    //     if (false) {
+        if (isMatchChoicesPopulated) {
+            PopulateMatchSettings( {0x15, 0x29, -1, -1}, 0x1 );
+            memcpy(GM_GLOBAL_MODE_MELEE, defaultGmGlobalModeMelee, 0x320);
+            u8* melee = (u8*)GM_GLOBAL_MODE_MELEE;
+
+            melee[P1_CHAR_ID_IDX] = charChoices[0];
+            melee[P2_CHAR_ID_IDX] = charChoices[1];
+            melee[STAGE_ID_IDX] = stageChoice;
+                // TODO: if you set offset 0x014E (r28) to 1 in here, then this should transition to scMelee
+        }
+
+
+        _OSEnableInterrupts();
+    }
+
+    // in netThread/[NtMatching] replaces call to netThreadTask with our own stuff
+    // SIMPLE_INJECTION(netThreadTaskOverride, 0x8014b670, "nop") {
+    //     //if (Netplay::IsInMatch()) { // if we are "in" the online training room
+    //         //if (Netplay::CheckIsMatched()) {
+    //         //    BootToScMelee();
+    //             // Load into scMelee here or something
+    //         //}
+    //     //}
+
+    //     //OSReport("setnextseq\n");
+    //     //setNextSeq(getGfSceneManager(), "sqKumite", 0);
+    //     //setNextScene(getGfSceneManager(), "scChallenger", 0);
+    //     if (getCurrentFrame() == 150) {
     //         PopulateMatchSettings( {0x15, 0x29, -1, -1}, 0x1 );
 
     //         if (isMatchChoicesPopulated) {
@@ -80,40 +109,9 @@ namespace GMMelee {
     //             // TODO: if you set offset 0x014E (r28) to 1 in here, then this should transition to scMelee
 
     //         }
+    //         //BootToScMelee();
     //     }
-
-
-    //     _OSEnableInterrupts();
     // }
-
-    // in netThread/[NtMatching] replaces call to netThreadTask with our own stuff
-    SIMPLE_INJECTION(netThreadTaskOverride, 0x8014b670, "nop") {
-        //if (Netplay::IsInMatch()) { // if we are "in" the online training room
-            //if (Netplay::CheckIsMatched()) {
-            //    BootToScMelee();
-                // Load into scMelee here or something
-            //}
-        //}
-
-        //OSReport("setnextseq\n");
-        //setNextSeq(getGfSceneManager(), "sqKumite", 0);
-        //setNextScene(getGfSceneManager(), "scChallenger", 0);
-        if (getCurrentFrame() == 150) {
-            PopulateMatchSettings( {0x15, 0x29, -1, -1}, 0x1 );
-
-            if (isMatchChoicesPopulated) {
-                memcpy(GM_GLOBAL_MODE_MELEE, defaultGmGlobalModeMelee, 0x320);
-                u8* melee = (u8*)GM_GLOBAL_MODE_MELEE;
-
-                melee[P1_CHAR_ID_IDX] = charChoices[0];
-                melee[P2_CHAR_ID_IDX] = charChoices[1];
-                melee[STAGE_ID_IDX] = stageChoice;
-                // TODO: if you set offset 0x014E (r28) to 1 in here, then this should transition to scMelee
-
-            }
-            //BootToScMelee();
-        }
-    }
 
 
 
