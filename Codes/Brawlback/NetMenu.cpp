@@ -72,11 +72,26 @@ DATA_WRITE(0x800CCF70, 48000024); // <- "b 0x24"
 // 80964858 calls isPlayerAssignReceived, booleam (I think this checks if local player has received their assigned port)
 
 // 80964960 calls startBeginMeleeAnimation, This is called on a second loop after everything above have returned true
+
+// So on vBrawl after doing forcing the network settings to true and forcefull setting the match settings, the following happens:
+// 1. The forced stage is set, but something removes it. 
+// 2. Because of the above, I breakpoint at 80949f10 and set the stage to r4 to battlefields String address (8042ba8c)
+// 3. Do the above like 3 times because it ends up getting called over and over and r4 is received with a value of 1f
+// 4. Then just continue, and crash at the start of the game when checking some network shit
+// Just noticed that GLOBAL MELEE settings are being overriden by something after exiting the training scene maybe?
+// Ok, just fgured it out. 80050380 this address at gmInitGlobalMelee function, sets up default settings? and overrrides ours :)
+// That means that we should fix need to make sure that global settings are actually used by the start melee functions. (my theory is that is like the match struct info of Smash bros melee)
+// For now I can just try to hook to post setup and set the default settings AGAIN.
+/// To let it load into meleee (weirdly and with weird camera lol):
+// 1. breakpoint here 806f27fc, before settings are overriden
+// 2. set PC to 806f2a88, after settings are overriden
+
 // 8095f7f0 address of setPrepareLoadStageComplete, this is called after stage loads and melee has started on 806d2a74 inside scMelee.process I think
 // 8095f8e4 address of isPreparedLoadStageEveryone, boolean and is invoked from 806d2ad4 in the same manner as above
 // 8013fdd4 address of SetupIDList, I think this address sets up the list of player ids
 // Training Scene crap ends
 
+//8055b054 temp address to set match settings manually
 
 // Key parts to getting training mode to transition to melee
 // 809644d0 return value needs to be true
@@ -84,9 +99,14 @@ DATA_WRITE(0x800CCF70, 48000024); // <- "b 0x24"
 // 8096485c return value needs to be true
 // 8042ba8c address to batttlefield string
 
+// After forcing the game to go into melee scene, for some reason the stage string will be null, so I need to manually set it each time.
 
 // start scmelee: 806d0148: on this address melee settings are set to process like an online match
 // 806cf748 makigng this address follow the branch causes the scene to transition to the local melee scene
+
+// Idea:
+// Actually I can just stop trying to force the game to go into melee scene as netplay and just study how the path that offline follows for setNext 
+// and make netplay follow that afterwards .
 
 // pretend request of "ConnectToAnybodyAsync" succeeded
 // thStartMatching/[NtMatching] replaces call to ConnectToAnybodyAsync with just a success code
@@ -94,6 +114,10 @@ INJECTION("ConnectToAnybodyAsyncHook", 0x801494A4, R"(
     li r3, 1
 )");
 
+
+// 0x806f281c get Stage wifiKind, this can be overriden to return the selected stage
+// 0x806f284c item switch function
+// 0x806f291c getAssignedPlayerData, override to get player data from us
 
 // overrides the branch to thStartMatching
 // called when you first get to the CSS in the online menu
@@ -147,21 +171,21 @@ SIMPLE_INJECTION(setNextAnyOkirakuCaseFive, 0x806f272c, "stw	r0, 0x000C (r15)") 
 }
 
 // in netThread/[NtMatching] replaces call to netThreadTask with our own stuff
-SIMPLE_INJECTION(netThreadTaskOverride, 0x8014b670, "nop") {
-    //if (Netplay::IsInMatch()) { // if we are "in" the online training room
-        //if (Netplay::CheckIsMatched()) {
-        //    BootToScMelee();
-            // Load into scMelee here or something
-        //}
-    //}
+// SIMPLE_INJECTION(netThreadTaskOverride, 0x8014b670, "nop") {
+//     //if (Netplay::IsInMatch()) { // if we are "in" the online training room
+//         //if (Netplay::CheckIsMatched()) {
+//         //    BootToScMelee();
+//             // Load into scMelee here or something
+//         //}
+//     //}
 
-    //OSReport("setnextseq\n");
-    //setNextSeq(getGfSceneManager(), "sqKumite", 0);
-    //setNextScene(getGfSceneManager(), "scChallenger", 0);
-    if (getCurrentFrame() == 150) {
-        //BootToScMelee();
-    }
-}
+//     //OSReport("setnextseq\n");
+//     //setNextSeq(getGfSceneManager(), "sqKumite", 0);
+//     //setNextScene(getGfSceneManager(), "scChallenger", 0);
+//     if (getCurrentFrame() == 150) {
+//         //BootToScMelee();
+//     }
+// }
 
 #endif
 
