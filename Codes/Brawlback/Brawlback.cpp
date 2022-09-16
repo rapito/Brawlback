@@ -83,23 +83,38 @@ namespace Util {
     void PopulatePlayerFrameData(PlayerFrameData& pfd, u8 pIdx) {
         ftManager* fighterManager = FIGHTER_MANAGER;
         Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
-        ftOwner* ftowner = fighter->getOwner();
+        ftOwner* ftowner = NULL;
+
+        if(fighter)
+            ftowner = fighter->getOwner();
 
         pfd.frame = getCurrentFrame();
         pfd.playerIdx = pIdx;
         pfd.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[pIdx]);
-        pfd.syncData.percent = (float)ftowner->getDamage();
-        pfd.syncData.stocks = (u8)ftowner->getStockCount();
-        pfd.syncData.facingDir = fighter->modules->postureModule->direction < 0.0 ? -1 : 1;
-        pfd.syncData.locX = fighter->modules->postureModule->xPos;
-        pfd.syncData.locY = fighter->modules->postureModule->yPos;
-        pfd.syncData.anim = fighter->modules->statusModule->action;
+
+        if(ftowner) {
+            pfd.syncData.percent = (float)ftowner->getDamage();
+            pfd.syncData.stocks = (u8)ftowner->getStockCount();
+        }
+
+
+        if(fighter) {
+            pfd.syncData.facingDir = fighter->modules->postureModule->direction < 0.0 ? -1 : 1;
+            pfd.syncData.locX = fighter->modules->postureModule->xPos;
+            pfd.syncData.locY = fighter->modules->postureModule->yPos;
+            pfd.syncData.anim = fighter->modules->statusModule->action;
+        }        
+        
     }
 
     void InjectToGame(const FrameData& fd, gfPadGamecube* pad_dst, int port) {
+        if(port >= 2) OSReport("What's good?\n");
         ftManager* fighterManager = FIGHTER_MANAGER;
         Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(port));
-        ftOwner* ftowner = fighter->getOwner();
+        ftOwner* ftowner = NULL;
+        if(fighter) {
+            ftowner = fighter->getOwner();
+        }
         const PlayerFrameData& pfd = fd.playerFrameDatas[port];
 
         if (port == 0) {
@@ -109,6 +124,8 @@ namespace Util {
         // other rand seed(s)??
         
         Util::InjectBrawlbackPadToPadStatus(*pad_dst, fd.playerFrameDatas[port].pad);
+
+        if(!ftowner) return;
 
         /*
         // resync
@@ -509,6 +526,7 @@ namespace FrameLogic {
                 Util::PopulatePlayerFrameData(fData.playerFrameDatas[i], i);
             }
             // sending inputs + current game frame
+            // TODO: (Dolphin side) do not crash if player frame data is empty, null or incomplete pretty please :)
             EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &fData, sizeof(FrameData));
         }
         else {

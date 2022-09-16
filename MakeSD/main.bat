@@ -23,7 +23,6 @@ IF NOT EXIST "%SD_CARD_PATH%" goto :MakeSD
 echo  Creating a virtual SD card. . .
 "mksdcard.exe" %SD_CARD_SIZE% "sd.raw"
 move "sd.raw" "%SD_CARD_PATH%"
-echo.
 echo  Created.
 
 :Continue
@@ -62,6 +61,9 @@ cd /d %~dp0
 ::timeout /t %MIN_EXEC_TIME% /nobreak > NUL
 
 call unmount.bat || goto error
+
+xcopy /y  "%SD_CARD_PATH%" "C:\Users\rober\Documents\brawl2.raw"
+
 
 goto :eof
 

@@ -1,7 +1,7 @@
 #ifndef __BRAWLBACK
 #define __BRAWLBACK
 
-#include "Assembly.h"
+#include "../Globals/Assembly.h"
 #include "Debug.h"
 #include "Wii/EXI/EXI.h"
 #include "Memory.h"
@@ -23,7 +23,7 @@
 
 
 //  toggles for netplay logic and rollback logic
-#if 0
+#if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
 #endif

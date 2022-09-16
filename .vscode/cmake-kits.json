@@ -91,7 +91,7 @@
   {
     "name": "Brawlback",
     "compilers": {
-      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+      "CXX": "C:\\devkitPro\\devkitPPC\\bin/powerpc-eabi-g++.exe"
     },
     "preferredGenerator": {
       "name": "MinGW Makefiles"
